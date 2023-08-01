@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# This script configures the current machine based on the selected mode
+# (see usage)
 # Expecting Cloudlab ubuntu-20.04
 
 # Global vars
@@ -8,12 +10,12 @@ NAS="/proj/progstack-PG0/farbod/"
 function check_pre_conditions {
 	ls $NAS &> /dev/null
 	ret=$?
-	if [ ! ret -eq 0 ]; then
+	if [ ! $ret -eq 0 ]; then
 		echo "Failed to find the directory on the NAS ($NAS)"
 		exit 1
 	fi
 
-	if [ ! -f $HOME/.ssh/dummy_id ]; then
+	if [ ! -f $HOME/.ssh/id_dummy ]; then
 		echo "The dummy key is not imported yet!"
 		exit 1
 	fi
@@ -124,7 +126,7 @@ if [ "x$1" = "xgen" ]; then
 	exit 0
 fi
 
-if [ "x$1" = "dut" ]; then
+if [ "x$1" = "xdut" ]; then
 	configure_dev_env
 	install_new_kernel
 
