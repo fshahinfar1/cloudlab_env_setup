@@ -130,12 +130,19 @@ if [ "x$1" = "xdut" ]; then
 	configure_dev_env
 	install_new_kernel
 
-	sudo apt install -y clang-15 libelf-dev libdw-dev gcc-multilib cmake python3-pip
+	sudo apt install -y libelf-dev libdw-dev gcc-multilib cmake python3-pip
 	pip install flask
 
+	# Install clang
+	CLANG_VERSION=15
+	cd $HOME
+	wget https://apt.llvm.org/llvm.sh
+	chmod +x llvm.sh
+	sudo ./llvm.sh $CLANG_VERSION
+
 	# Configure the clang
-	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100
-	sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-15 100
+	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
+	sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-$CLANG_VERSION 100
 
 	# Configure HUGEPAGES
 	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=16"'
