@@ -69,15 +69,15 @@ EOF
 	git config --global user.email "fshahinfar1@gmail.com"
 	git config --global init.defaultBranch "master"
 
+	sudo apt update
+	sudo apt install -y htop build-essential exuberant-ctags
+
 	# Configure vim
 	cd $HOME
 	git clone https://github.com/fshahinfar1/dotvim
 	cd ./dotvim
 	./install.sh
 	cd $HOME
-
-	sudo apt update
-	sudo apt install -y htop build-essential
 }
 
 function setup_nginx {
