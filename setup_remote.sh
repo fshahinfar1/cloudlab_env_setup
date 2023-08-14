@@ -1,7 +1,9 @@
 user=farbod
-dut_machine=amd159.utah.cloudlab.us
-gen_machine=amd166.utah.cloudlab.us
+dut_machine=amd102.utah.cloudlab.us
+gen_machine=amd108.utah.cloudlab.us
 
+
+ssh-keyscan $dut_machine $gen_machine >> $HOME/.ssh/known_hosts
 
 # # Copy the ssh-key
 scp $HOME/.ssh/dummy/* ${user}@${dut_machine}:~/.ssh/
@@ -14,9 +16,11 @@ scp ./setup.sh ${user}@${gen_machine}:~/
 # Run setup script
 
 ssh ${user}@${dut_machine} <<EOF
+ssh-keyscan github.com >> ~/.ssh/known_hosts
 bash ~/setup.sh dut
 EOF
 
 ssh ${user}@${gen_machine} <<EOF
+ssh-keyscan github.com >> ~/.ssh/known_hosts
 bash ~/setup.sh gen
 EOF
