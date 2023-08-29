@@ -1,6 +1,6 @@
 user=farbod
-dut_machine=amd102.utah.cloudlab.us
-gen_machine=amd108.utah.cloudlab.us
+dut_machine=amd177.utah.cloudlab.us
+gen_machine=amd173.utah.cloudlab.us
 
 
 ssh-keyscan $dut_machine $gen_machine >> $HOME/.ssh/known_hosts

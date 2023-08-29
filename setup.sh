@@ -97,6 +97,8 @@ function install_new_kernel {
 
 	# Install bpftool
 	cd $NAS/kernel/linux-6.1.4/tools/bpf/bpftool/
+	sudo make clean
+	sudo make
 	sudo make install
 
 	sudo ln -s $NAS/kernel/linux-6.1.4/tools/perf/perf /usr/bin/perf
@@ -143,6 +145,7 @@ if [ "x$1" = "xdut" ]; then
 	# Configure the clang
 	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
 	sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-$CLANG_VERSION 100
+	sudo update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-$CLANG_VERSION 100
 
 	# Configure HUGEPAGES
 	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=16"'
