@@ -83,7 +83,7 @@ EOF
 function setup_nginx {
 	# Setup NGINX
 	sudo apt install -y nginx
-	sudo cp /proj/progstack-PG0/farbod/nginx.conf /etc/nginx/nginx.conf
+	# sudo cp /proj/progstack-PG0/farbod/nginx.conf /etc/nginx/nginx.conf
 	sudo systemctl stop nginx
 	sudo systemctl disable nginx
 }
@@ -147,6 +147,12 @@ if [ "x$1" = "xdut" ]; then
 	sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-$CLANG_VERSION 100
 	sudo update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-$CLANG_VERSION 100
 
+	# Install g++-11
+	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+	sudo apt install -y gcc-11 g++-11
+	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+
 	# Configure HUGEPAGES
 	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=16"'
 	echo $grub | sudo tee -a /etc/default/grub
@@ -154,6 +160,7 @@ if [ "x$1" = "xdut" ]; then
 
 	get_repos
 	# setup_nginx
+	exit 0
 fi
 
 if [ "x$1" = "xrepo" ]; then

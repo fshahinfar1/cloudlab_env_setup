@@ -1,11 +1,11 @@
 user=farbod
-dut_machine=amd177.utah.cloudlab.us
-gen_machine=amd173.utah.cloudlab.us
+dut_machine=amd114.utah.cloudlab.us
+gen_machine=amd116.utah.cloudlab.us
 
 
 ssh-keyscan $dut_machine $gen_machine >> $HOME/.ssh/known_hosts
 
-# # Copy the ssh-key
+# Copy the ssh-key
 scp $HOME/.ssh/dummy/* ${user}@${dut_machine}:~/.ssh/
 scp $HOME/.ssh/dummy/* ${user}@${gen_machine}:~/.ssh/
 
