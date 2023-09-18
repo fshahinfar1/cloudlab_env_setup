@@ -70,7 +70,7 @@ EOF
 	git config --global init.defaultBranch "master"
 
 	sudo apt update
-	sudo apt install -y htop build-essential exuberant-ctags
+	sudo apt install -y htop build-essential exuberant-ctags mosh cmake
 
 	# Configure vim
 	cd $HOME
@@ -104,6 +104,11 @@ function install_new_kernel {
 	sudo ln -s $NAS/kernel/linux-6.1.4/tools/perf/perf /usr/bin/perf
 }
 
+function disable_irqbalance {
+	sudo systemctl disable irqbalance.service
+	sudo systemctl stop irqbalance.service
+}
+
 function usage {
 	echo "setup.sh <mode>"
 	echo "MODES:"
@@ -125,6 +130,7 @@ fi
 if [ "x$1" = "xgen" ]; then
 	configure_dev_env
 	get_wrk_gen
+	disable_irqbalance
 	exit 0
 fi
 
@@ -160,6 +166,8 @@ if [ "x$1" = "xdut" ]; then
 
 	get_repos
 	# setup_nginx
+
+	disable_irqbalance
 	exit 0
 fi
 
