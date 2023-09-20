@@ -25,12 +25,15 @@ function get_repos {
 	list_repos=( "git@github.com:fshahinfar1/kashk.git" \
 		"git@github.com:fshahinfar1/auto_generated_bpf.git" \
 		"git@github.com:fshahinfar1/auto_bpf_offload_case_study.git" \
+		"git@github.com:fshahinfar1/auto_kern_offload_bench.git" \
 	)
 
 	for repo_addr in ${list_repos[@]}; do
 		cd $HOME
 		git clone $repo_addr --config core.sshCommand='ssh -i ~/.ssh/id_dummy'
 	done
+
+	c
 }
 
 function get_wrk_gen {
@@ -70,7 +73,7 @@ EOF
 	git config --global init.defaultBranch "master"
 
 	sudo apt update
-	sudo apt install -y htop build-essential exuberant-ctags mosh cmake
+	sudo apt install -y htop build-essential exuberant-ctags mosh cmake silversearcher-ag
 
 	# Configure vim
 	cd $HOME
@@ -138,7 +141,7 @@ if [ "x$1" = "xdut" ]; then
 	configure_dev_env
 	install_new_kernel
 
-	sudo apt install -y libelf-dev libdw-dev gcc-multilib cmake python3-pip
+	sudo apt install -y libbpf-dev libelf-dev libdw-dev gcc-multilib cmake python3-pip
 	pip install flask
 
 	# Install clang
@@ -151,7 +154,7 @@ if [ "x$1" = "xdut" ]; then
 	# Configure the clang
 	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
 	sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-$CLANG_VERSION 100
-	sudo update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-$CLANG_VERSION 100
+	sudo update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-strip-$CLANG_VERSION 100
 
 	# Install g++-11
 	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
@@ -160,7 +163,7 @@ if [ "x$1" = "xdut" ]; then
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
 
 	# Configure HUGEPAGES
-	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=16"'
+	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8"'
 	echo $grub | sudo tee -a /etc/default/grub
 	sudo update-grub
 
