@@ -52,6 +52,16 @@ function get_wrk_gen {
 	make
 }
 
+function bring_gen_script {
+	# Place some scripts which help run experiments
+	cd $HOME
+	files=( gen.sh ping_pong.lua twt_c.lua )
+
+	for f in ${files[@]}; do
+		cp $NAS/$f ./
+	done
+}
+
 function configure_dev_env {
 	# Configure tmux
 	cat > $HOME/.tmux.conf <<EOF
@@ -133,6 +143,7 @@ fi
 if [ "x$1" = "xgen" ]; then
 	configure_dev_env
 	get_wrk_gen
+	bring_gen_scripts
 	disable_irqbalance
 	exit 0
 fi

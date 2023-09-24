@@ -1,9 +1,8 @@
+#! /bin/bash
 user=farbod
-# dut_machine=amd114.utah.cloudlab.us
-# gen_machine=amd116.utah.cloudlab.us
 
-dut_machine=hp012.utah.cloudlab.us
-gen_machine=hp018.utah.cloudlab.us
+dut_machine=hp190.utah.cloudlab.us
+gen_machine=hp167.utah.cloudlab.us
 
 dests=( $dut_machine $gen_machine )
 
@@ -17,7 +16,7 @@ for m in ${dests[@]}; do
 	# Copy setup script
 	scp ./setup.sh ${user}@${m}:~/
 	# Copy helper scripts
-	scp -r ./script ${user}@${m}:~/
+	scp -r ./scripts ${user}@${m}:~/
 done
 
 # Run setup script
