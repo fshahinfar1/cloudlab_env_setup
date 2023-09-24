@@ -52,7 +52,7 @@ function get_wrk_gen {
 	make
 }
 
-function bring_gen_script {
+function bring_gen_scripts {
 	# Place some scripts which help run experiments
 	cd $HOME
 	files=( gen.sh ping_pong.lua twt_c.lua )
