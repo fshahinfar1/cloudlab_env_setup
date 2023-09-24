@@ -109,17 +109,34 @@ function install_new_kernel {
 		linux-libc-dev_6.1.4-6_amd64.deb
 
 	# Install bpftool
+	# TODO: this is failing (test it)
 	cd $NAS/kernel/linux-6.1.4/tools/bpf/bpftool/
 	sudo make clean
 	sudo make
 	sudo make install
 
+	# Install perf
 	sudo ln -s $NAS/kernel/linux-6.1.4/tools/perf/perf /usr/bin/perf
 }
 
 function disable_irqbalance {
 	sudo systemctl disable irqbalance.service
 	sudo systemctl stop irqbalance.service
+}
+
+
+function install_cpupower {
+	# Install cpupower tool on the server
+	cd $NAS/kernel/linux-6.1.4/tools/power/cpupower
+	sudo make install
+	echo "/usr/lib64" | sudo tee /etc/ld.so.conf.d/cpupower.conf
+	sudo ldconfig
+}
+
+function cpupower_config {
+	# Configure CPU scheduler policy
+	cpupower frequency-set -g performance
+	sudo cpupower idle-set -D 1
 }
 
 function usage {
@@ -182,6 +199,8 @@ if [ "x$1" = "xdut" ]; then
 	# setup_nginx
 
 	disable_irqbalance
+	install_cpupower
+	cpupower_config
 	exit 0
 fi
 
