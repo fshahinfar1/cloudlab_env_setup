@@ -203,6 +203,7 @@ if [ "x$1" = "xdut" ]; then
 	cpupower_config
 	echo 0 | sudo tee /proc/sys/kernel/numa_balancing
 	echo 0 | sudo tee /sys/kernel/mm/ksm/run
+	echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
 	exit 0
 fi
 
