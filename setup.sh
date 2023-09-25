@@ -124,7 +124,6 @@ function disable_irqbalance {
 	sudo systemctl stop irqbalance.service
 }
 
-
 function install_cpupower {
 	# Install cpupower tool on the server
 	cd $NAS/kernel/linux-6.1.4/tools/power/cpupower
@@ -133,10 +132,28 @@ function install_cpupower {
 	sudo ldconfig
 }
 
-function cpupower_config {
+function install_x86_energy {
+	cd $NAS/kernel/linux-6.1.4/tools/power/x86/x86_energy_perf_policy
+	sudo make clean
+	sudo make
+	sudo make install
+}
+
+function configure_for_exp {
+	disable_irqbalance
 	# Configure CPU scheduler policy
 	cpupower frequency-set -g performance
 	sudo cpupower idle-set -D 1
+	# Disable Numa balancing
+	echo 0 | sudo tee /proc/sys/kernel/numa_balancing
+	# Disable Kernel Same-Page Merging
+	echo 0 | sudo tee /sys/kernel/mm/ksm/run
+	# Disable Intel Turbo Boost
+	echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+	#
+	x86_energy_perf_policy performance
+	# Disable Transparent Huge Pages
+	echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 }
 
 function usage {
@@ -161,7 +178,9 @@ if [ "x$1" = "xgen" ]; then
 	configure_dev_env
 	get_wrk_gen
 	bring_gen_scripts
-	disable_irqbalance
+	install_cpupower
+	install_x86_energy
+	configure_for_exp
 	exit 0
 fi
 
@@ -198,12 +217,9 @@ if [ "x$1" = "xdut" ]; then
 	get_repos
 	# setup_nginx
 
-	disable_irqbalance
 	install_cpupower
-	cpupower_config
-	echo 0 | sudo tee /proc/sys/kernel/numa_balancing
-	echo 0 | sudo tee /sys/kernel/mm/ksm/run
-	echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+	install_x86_energy
+	configure_for_exp
 	exit 0
 fi
 
