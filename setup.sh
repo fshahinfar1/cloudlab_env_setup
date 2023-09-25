@@ -201,6 +201,8 @@ if [ "x$1" = "xdut" ]; then
 	disable_irqbalance
 	install_cpupower
 	cpupower_config
+	echo 0 | sudo tee /proc/sys/kernel/numa_balancing
+	echo 0 | sudo tee /sys/kernel/mm/ksm/run
 	exit 0
 fi
 
