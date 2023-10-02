@@ -1,8 +1,8 @@
 #! /bin/bash
 user=farbod
 
-dut_machine=hp190.utah.cloudlab.us
-gen_machine=hp167.utah.cloudlab.us
+dut_machine=hp053.utah.cloudlab.us
+gen_machine=hp050.utah.cloudlab.us
 
 dests=( $dut_machine $gen_machine )
 

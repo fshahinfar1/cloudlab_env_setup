@@ -142,7 +142,7 @@ function install_x86_energy {
 function configure_for_exp {
 	disable_irqbalance
 	# Configure CPU scheduler policy
-	cpupower frequency-set -g performance
+	sudo cpupower frequency-set -g performance
 	sudo cpupower idle-set -D 1
 	# Disable Numa balancing
 	echo 0 | sudo tee /proc/sys/kernel/numa_balancing
@@ -151,7 +151,7 @@ function configure_for_exp {
 	# Disable Intel Turbo Boost
 	echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
 	#
-	x86_energy_perf_policy performance
+	sudo x86_energy_perf_policy performance
 	# Disable Transparent Huge Pages
 	echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 }
@@ -230,6 +230,11 @@ fi
 
 if [ "x$1" = "xkern" ]; then
 	install_new_kernel
+	exit 0
+fi
+
+if [ "x$1" = "xexp" ]; then
+	configure_for_exp
 	exit 0
 fi
 
