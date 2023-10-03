@@ -176,6 +176,22 @@ function configure_for_exp {
 	sudo x86_energy_perf_policy performance
 	# Disable Transparent Huge Pages
 	echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+
+	# Flow rules
+	if [ -z "$DEVICE" ]; then
+		echo select your NIC
+		echo "show ip addr ? [Y/n]"
+		read cmd
+		case $cmd in
+			y|Y)
+				ip a
+				;;
+		esac
+		echo Name of the device is:
+		read DEVICE
+		echo using $DEVICE for flow-steering
+	fi
+	sudo ethtool -U $DEVICE flow-type tcp4 dst-port 8080 action 2
 }
 
 function usage {
