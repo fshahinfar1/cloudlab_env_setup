@@ -21,6 +21,28 @@ function check_pre_conditions {
 	fi
 }
 
+function install_clang {
+	# Install clang
+	CLANG_VERSION=15
+	cd $HOME
+	wget https://apt.llvm.org/llvm.sh
+	chmod +x llvm.sh
+	sudo ./llvm.sh $CLANG_VERSION
+
+	# Configure the clang
+	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
+	sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-$CLANG_VERSION 100
+	sudo update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-strip-$CLANG_VERSION 100
+}
+
+function install_gcc11 {
+	# Install g++-11
+	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+	sudo apt install -y gcc-11 g++-11
+	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+}
+
 function get_repos {
 	list_repos=( "git@github.com:fshahinfar1/kashk.git" \
 		"git@github.com:fshahinfar1/auto_generated_bpf.git" \
@@ -163,8 +185,9 @@ function usage {
 	echo "  * dut: configure the machine under test"
 	echo "  * repo: only fetch the repos"
 	echo "  * kern: only install the custom kernel"
+	echo "  * exp : configure machine for the experiment"
+	echo "  * clang: install clang"
 }
-
 
 check_pre_conditions
 
@@ -173,41 +196,24 @@ if [ $# -lt 1 ] ; then
 	exit 0
 fi
 
-# TODO: use switch-case
-if [ "x$1" = "xgen" ]; then
+function do_gen {
 	configure_dev_env
 	get_wrk_gen
 	bring_gen_scripts
 	install_cpupower
 	install_x86_energy
 	configure_for_exp
-	exit 0
-fi
+}
 
-if [ "x$1" = "xdut" ]; then
+function do_dut {
 	configure_dev_env
 	install_new_kernel
 
 	sudo apt install -y libbpf-dev libelf-dev libdw-dev gcc-multilib cmake python3-pip
 	pip install flask
 
-	# Install clang
-	CLANG_VERSION=15
-	cd $HOME
-	wget https://apt.llvm.org/llvm.sh
-	chmod +x llvm.sh
-	sudo ./llvm.sh $CLANG_VERSION
-
-	# Configure the clang
-	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
-	sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-$CLANG_VERSION 100
-	sudo update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-strip-$CLANG_VERSION 100
-
-	# Install g++-11
-	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-	sudo apt install -y gcc-11 g++-11
-	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
-	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+	install_clang
+	install_gcc11
 
 	# Configure HUGEPAGES
 	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8"'
@@ -220,23 +226,29 @@ if [ "x$1" = "xdut" ]; then
 	install_cpupower
 	install_x86_energy
 	configure_for_exp
-	exit 0
-fi
+}
 
-if [ "x$1" = "xrepo" ]; then
-	get_repos
-	exit 0
-fi
-
-if [ "x$1" = "xkern" ]; then
-	install_new_kernel
-	exit 0
-fi
-
-if [ "x$1" = "xexp" ]; then
-	configure_for_exp
-	exit 0
-fi
-
-echo "Did you mean to run this script for 'dut'!"
-exit 1
+case $1 in
+	"gen")
+		do_gen ;;
+	"dut")
+		do_dut ;;
+	"repo")
+		get_repos ;;
+	"kern")
+		install_new_kernel ;;
+	"exp")
+		configure_for_exp ;;
+	"clang")
+		install_clang ;;
+	"gcc11")
+		install_gcc11 ;;
+	"nginx")
+		setup_nginx ;;
+	*)
+		echo "Error: unknown mode was selected"
+		usage
+		exit 1
+		;;
+esac
+exit 0
