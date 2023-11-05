@@ -176,7 +176,8 @@ function configure_for_exp {
 	sudo x86_energy_perf_policy performance
 	# Disable Transparent Huge Pages
 	echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
-
+	# Disable ebpf stat collection if enable
+	sudo sysctl -w kernel.bpf_stats_enabled=0
 	# Flow rules
 	if [ -z "$DEVICE" ]; then
 		echo select your NIC
