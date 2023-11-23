@@ -28,6 +28,8 @@ function install_clang {
 	wget https://apt.llvm.org/llvm.sh
 	chmod +x llvm.sh
 	sudo ./llvm.sh $CLANG_VERSION
+	# Both install clang-15 and clang-16
+	sudo ./llvm.sh 16
 
 	# Configure the clang
 	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
@@ -123,7 +125,7 @@ function setup_nginx {
 	sudo systemctl disable nginx
 }
 
-function install_new_kernel {
+function _install_custom_kernel {
 	# Install new kernel
 	cd $NAS/kernel/binary/
 	sudo dpkg -i linux-headers-6.1.4_6.1.4-6_amd64.deb \
@@ -139,6 +141,13 @@ function install_new_kernel {
 
 	# Install perf
 	sudo ln -s $NAS/kernel/linux-6.1.4/tools/perf/perf /usr/bin/perf
+}
+
+function install_new_kernel {
+	# _install_custom_kernel
+	wget https://raw.githubusercontent.com/pimlie/ubuntu-mainline-kernel.sh/master/ubuntu-mainline-kernel.sh
+	sudo bash ./ubuntu-mainline-kernel.sh -i 6.1.0
+	sudo update-grub
 }
 
 function disable_irqbalance {
@@ -222,30 +231,47 @@ function do_gen {
 	configure_for_exp
 }
 
+function install_libbpf {
+	cd $HOME
+	mkdir libbpf
+	cd $HOME/libbpf
+	wget https://github.com/libbpf/libbpf/archive/refs/tags/v1.2.0.tar.gz
+	tar -xf v1.2.0.tar.gz
+	cd libbpf-1.2.0/src/
+	make
+	sudo make install
+	echo "/usr/lib64/" | sudo tee /etc/ld.so.conf.d/libbpf.conf
+	sudo ldconfig
+}
+
 function do_dut {
 	configure_dev_env
 	install_new_kernel
 
-	sudo apt install -y libbpf-dev libelf-dev libdw-dev gcc-multilib cmake python3-pip
+	install_libbpf
+	sudo apt install -y libelf-dev libdw-dev gcc-multilib cmake \
+		python3 python3-pip python3-venv
 	pip install flask
-
 	install_clang
-	install_gcc11
+	# install_gcc11
 
 	# Configure HUGEPAGES
-	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8"'
+	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
 	echo $grub | sudo tee -a /etc/default/grub
 	sudo update-grub
 
 	get_repos
 	# setup_nginx
 
-	install_cpupower
-	install_x86_energy
+	# install_cpupower
+	# install_x86_energy
+	sudo apt install linux-tools-`uname -r`
 	configure_for_exp
 }
 
 case $1 in
+	"dev_env")
+		configure_dev_env ;;
 	"gen")
 		do_gen ;;
 	"dut")
