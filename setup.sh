@@ -29,7 +29,7 @@ function install_clang {
 	chmod +x llvm.sh
 	sudo ./llvm.sh $CLANG_VERSION
 	# Both install clang-15 and clang-16
-	sudo ./llvm.sh 16
+	sudo ./llvm.sh 18
 
 	# Configure the clang
 	sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
@@ -235,9 +235,11 @@ function install_libbpf {
 	cd $HOME
 	mkdir libbpf
 	cd $HOME/libbpf
-	wget https://github.com/libbpf/libbpf/archive/refs/tags/v1.2.0.tar.gz
-	tar -xf v1.2.0.tar.gz
-	cd libbpf-1.2.0/src/
+	_VERSION="1.0.0"
+	VERSION="v$_VERSION"
+	wget https://github.com/libbpf/libbpf/archive/refs/tags/$VERSION.tar.gz
+	tar -xf $VERSION.tar.gz
+	cd libbpf-$_VERSION/src/
 	make
 	sudo make install
 	echo "/usr/lib64/" | sudo tee /etc/ld.so.conf.d/libbpf.conf
@@ -248,9 +250,9 @@ function do_dut {
 	configure_dev_env
 	install_new_kernel
 
-	install_libbpf
 	sudo apt install -y libelf-dev libdw-dev gcc-multilib cmake \
 		python3 python3-pip python3-venv
+	install_libbpf
 	pip install flask
 	install_clang
 	# install_gcc11
