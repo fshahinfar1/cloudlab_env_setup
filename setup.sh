@@ -188,7 +188,7 @@ function configure_for_exp {
 	# Disable ebpf stat collection if enable
 	sudo sysctl -w kernel.bpf_stats_enabled=0
 	# Flow rules
-	if [ -z "$DEVICE" ]; then
+	if [ -z "$NET_IFACE" ]; then
 		echo select your NIC
 		echo "show ip addr ? [Y/n]"
 		read cmd
@@ -198,10 +198,10 @@ function configure_for_exp {
 				;;
 		esac
 		echo Name of the device is:
-		read DEVICE
-		echo using $DEVICE for flow-steering
+		read NET_IFACE
+		echo using $NET_IFACE for flow-steering
 	fi
-	sudo ethtool -U $DEVICE flow-type tcp4 dst-port 8080 action 2
+	sudo ethtool -U $NET_IFACE flow-type tcp4 dst-port 8080 action 2
 }
 
 function usage {
