@@ -107,7 +107,7 @@ EOF
 	git config --global init.defaultBranch "master"
 
 	sudo apt update
-	sudo apt install -y htop build-essential exuberant-ctags mosh cmake silversearcher-ag
+	sudo apt install -y htop build-essential exuberant-ctags mosh cmake silversearcher-ag pkg-config
 
 	# Configure vim
 	cd $HOME
@@ -196,10 +196,16 @@ function configure_for_exp {
 			y|Y)
 				ip a
 				;;
+			*)
+				;;
 		esac
 		echo Name of the device is:
 		read NET_IFACE
-		echo using $NET_IFACE for flow-steering
+		if [ ! -z "$NET_IFACE" ]; then
+			echo using $NET_IFACE for flow-steering
+		else
+			echo "warning: NET_IFACE is empty!"
+		fi
 	fi
 	sudo ethtool -U $NET_IFACE flow-type tcp4 dst-port 8080 action 2
 }

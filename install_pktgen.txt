@@ -1,0 +1,95 @@
+# THIS IS NOT A SCRIPT TO BE EXECUTED
+echo "THIS SCRIPT IS ONLY FOR READING AND NOT EXECUTING"
+exit 1
+
+# Deps
+sudo apt update
+sudo apt install meson ninja-build libpcap-dev libcap-dev libelf-dev \
+	python3 python3-pip python3-pyelftools pkg-config \
+	libnuma-dev libpcap-dev libcap-dev \
+	cmake
+
+echo Might need this I am not sure, need to update pkg-config path.
+export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+
+# Prepare the disk
+MOUNT_DIR=$HOME/disk
+sudo mkfs.ext4 /dev/sda4
+mkdir disk
+sudo mount /dev/sda4 $MOUNT_DIR
+sudo chown $USER $MOUNT_DIR
+cd $MOUNT_DIR
+
+# LIBNUMA
+echo "for some reason installing libnuma did not worked :("
+echo "build from source"
+cd $MOUNT_DIR
+git clone https://github.com/numactl/numactl.git
+cd numactl/
+ls
+./autogen.sh
+./configure
+make -j
+sudo make install
+
+# Configure HUGEPAGES
+grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
+echo $grub | sudo tee -a /etc/default/grub
+sudo update-grub
+echo "Needs reboot in order to take effect, but do not reboot now :)"
+
+# MELLANOX OFED
+# Installing this for mlx5 driver
+cd $MOUNT_DIR
+wget https://content.mellanox.com/ofed/MLNX_OFED-23.10-1.1.9.0/MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu20.04-x86_64.tgz
+# wget https://content.mellanox.com/ofed/MLNX_OFED-23.10-1.1.9.0/MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu22.04-x86_64.tgz
+tar -xf ./MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu20.04-x86_64.tgz
+cd MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu20.04-x86_64/
+sudo ./mlnxofedinstall --dkms --dpdk
+
+echo "Need to reboot the system! continue?"
+read x
+sudo reboot
+
+# DPDK
+cd $MOUNT_DIR
+wget https://fast.dpdk.org/rel/dpdk-23.11.tar.xz
+tar -xf ./dpdk-23.11.tar.xz
+cd dpdk-23.11/
+meson build/
+cd build/
+ninja
+sudo meson install
+
+# PKTGEN
+cd $MOUNT_DIR
+git clone https://github.com/pktgen/Pktgen-DPDK
+cd Pktgen-DPDK/
+meson build
+cd build/
+ninja
+sudo meson install
+
+# Getting the target interface PIC address
+NET_IFACE=ens1f1np1
+lshw | grep $NET_IFACE -C 10
+
+# If you do not want to reboot for hugepages
+echo If did not configured hugepages on the grub, or did not reboot.
+sudo mount -t hugetlbfs nodev /dev/hugepages
+echo 1024 | sudo tee /sys/devices/system/node/node*/hugepages/hugepages-2048kB/nr_hugepages
+
+# Running
+sudo pktgen -l 0-4 -n3 -a 03:00.1
+
+# dpdk-burst-replay
+
+sudo apt install libyaml-dev libcsv-dev cmake
+git clone  https://github.com/sebymiano/dpdk-burst-replay/
+cd dpdk-burst-replay
+git checkout multicore-txrate
+git submodule update --init
+mkdir build/
+cd build/
+cmake ../
+make
