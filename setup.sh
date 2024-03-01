@@ -2,7 +2,7 @@
 
 # This script configures the current machine based on the selected mode
 # (see usage)
-# Expecting Cloudlab ubuntu-20.04
+# Expecting Cloudlab xl170 (ubuntu-20.04/ubuntu-22.04)
 
 # Global vars
 NAS="/proj/progstack-PG0/farbod/"
@@ -93,11 +93,16 @@ unbind-key C-b
 set -g prefix C-Space
 set -g escape-time 0
 bind r source-file ~/.tmux.conf \; display "Configuration executed"
-
 set -g default-terminal "xterm-256color"
-
 set -g mouse on
 set -ga terminal-overrides ',*256color*:smcup@:rmcup@'
+set -g terminal-overrides 'xterm-256color:smcup@:rmcup@'
+set-window-option -g mode-keys vi
+
+bind-key k select-pane -U
+bind-key j select-pane -D
+bind-key h select-pane -L
+bind-key l select-pane -R
 EOF
 
 	# Configure git
@@ -127,27 +132,23 @@ function setup_nginx {
 
 function _install_custom_kernel {
 	# Install new kernel
+	# cd $NAS/kernel/binary/
 	cd $NAS/kernel/binary/
-	sudo dpkg -i linux-headers-6.1.4_6.1.4-6_amd64.deb \
-		linux-image-6.1.4_6.1.4-6_amd64.deb \
-		linux-libc-dev_6.1.4-6_amd64.deb
-
-	# Install bpftool
-	# TODO: this is failing (test it)
-	cd $NAS/kernel/linux-6.1.4/tools/bpf/bpftool/
-	sudo make clean
-	sudo make
-	sudo make install
-
-	# Install perf
-	sudo ln -s $NAS/kernel/linux-6.1.4/tools/perf/perf /usr/bin/perf
+	sudo dpkg -i linux-headers.deb \
+		linux-image.deb \
+		linux-libc-dev.deb
 }
 
-function install_new_kernel {
-	# _install_custom_kernel
+function _install_custom_kernel_from_script {
 	wget https://raw.githubusercontent.com/pimlie/ubuntu-mainline-kernel.sh/master/ubuntu-mainline-kernel.sh
 	sudo bash ./ubuntu-mainline-kernel.sh -i 6.1.0
 	sudo update-grub
+}
+
+function install_new_kernel {
+	echo Installing new kernel ...
+	_install_custom_kernel
+	# _install_custom_kernel_from_script
 }
 
 function disable_irqbalance {
@@ -205,9 +206,102 @@ function configure_for_exp {
 			echo using $NET_IFACE for flow-steering
 		else
 			echo "warning: NET_IFACE is empty!"
+			return 1
 		fi
 	fi
 	sudo ethtool -U $NET_IFACE flow-type tcp4 dst-port 8080 action 2
+	sudo ethtool -U $NET_IFACE flow-type udp4 dst-port 8080 action 2
+	for i in $(seq 3); do
+		echo $i
+	done
+	echo The flow rules are set as below. Make sure nothing is wrong.
+	sudo ethtool -u $NET_IFACE
+}
+
+function install_dpdk_burst_replay {
+	# DEPS
+	sudo apt update
+	sudo apt install -y meson ninja-build libpcap-dev libcap-dev libelf-dev \
+		python3 python3-pip python3-pyelftools pkg-config \
+		libnuma-dev libpcap-dev libcap-dev cmake
+	# GRUB
+	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
+	echo $grub | sudo tee -a /etc/default/grub
+	sudo update-grub
+	# OFED
+	sudo lshw | grep mlx5 &> /dev/null
+	has_mlx5=$?
+	if [ $has_mlx5 -eq 0 ]; then
+		echo This machine uses MLX5 driver
+		source /etc/lsb-release
+		if [ -z "$DISTRIB_ID" -o "$DISTRIB_ID" != "Ubuntu" ]; then
+			echo "Failed to install the Mellanox OFED. Expected Ubuntu distribution."
+			return 1
+		fi
+		ubuntu_release=$DISTRIB_RELEASE
+		tar_name="MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu$ubuntu_release-x86_64"
+		cd $HOME
+		mkdir gen/
+		cd $HOME/gen/
+		wget "https://content.mellanox.com/ofed/MLNX_OFED-23.10-1.1.9.0/MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu$ubuntu_release-x86_64.tgz"
+		tar -xf "./$tar_name.tgz"
+		cd $tar_name/
+		yes | sudo ./mlnxofedinstall --dkms --dpdk
+		echo You will need to reboot
+	fi
+	# DPDK
+	cd $HOME/gen/
+	wget https://fast.dpdk.org/rel/dpdk-23.11.tar.xz
+	tar -xf ./dpdk-23.11.tar.xz
+	cd dpdk-23.11/
+	meson build/
+	cd build/
+	ninja
+	sudo meson install
+	# tool
+	cd $HOME/gen/
+	sudo apt install libyaml-dev libcsv-dev cmake
+	git clone  https://github.com/sebymiano/dpdk-burst-replay/
+	cd dpdk-burst-replay
+	git checkout multicore-txrate
+	git submodule update --init
+	mkdir build/
+	cd build/
+	cmake ../
+	make
+}
+
+function install_libbpf {
+	cd $HOME
+	mkdir libbpf
+	cd $HOME/libbpf
+	_VERSION="1.0.0"
+	VERSION="v$_VERSION"
+	wget https://github.com/libbpf/libbpf/archive/refs/tags/$VERSION.tar.gz
+	tar -xf $VERSION.tar.gz
+	cd libbpf-$_VERSION/src/
+	make
+	sudo make install
+	echo "/usr/lib64/" | sudo tee /etc/ld.so.conf.d/libbpf.conf
+	sudo ldconfig
+}
+
+function install_bpftool {
+	# Install bpftool
+	# TODO: this is failing (test it)
+	cd $NAS/kernel/linux-6.1.4/tools/bpf/bpftool/
+	sudo make clean
+	sudo make
+	sudo make install
+}
+
+function install_perf {
+	# Install perf
+	path=$NAS/kernel/linux-6.1.4/tools/perf
+	cd $path/
+	sudo make clean
+	sudo make
+	sudo ln -s $path/perf /usr/bin/perf
 }
 
 function usage {
@@ -232,36 +326,26 @@ function do_gen {
 	configure_dev_env
 	get_wrk_gen
 	bring_gen_scripts
+	install_dpdk_burst_replay
 	install_cpupower
 	install_x86_energy
 	configure_for_exp
 }
 
-function install_libbpf {
-	cd $HOME
-	mkdir libbpf
-	cd $HOME/libbpf
-	_VERSION="1.0.0"
-	VERSION="v$_VERSION"
-	wget https://github.com/libbpf/libbpf/archive/refs/tags/$VERSION.tar.gz
-	tar -xf $VERSION.tar.gz
-	cd libbpf-$_VERSION/src/
-	make
-	sudo make install
-	echo "/usr/lib64/" | sudo tee /etc/ld.so.conf.d/libbpf.conf
-	sudo ldconfig
-}
-
 function do_dut {
 	configure_dev_env
-	install_new_kernel
 
 	sudo apt install -y libelf-dev libdw-dev gcc-multilib cmake \
-		python3 python3-pip python3-venv
-	install_libbpf
+		python3 python3-pip python3-venv libpcap-dev libpci-dev libnuma-dev \
+		flex bison libslang2-dev
+
 	pip install flask
 	install_clang
 	# install_gcc11
+	install_bpftool
+	install_libbpf
+
+	install_new_kernel
 
 	# Configure HUGEPAGES
 	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
@@ -271,9 +355,11 @@ function do_dut {
 	get_repos
 	# setup_nginx
 
-	# install_cpupower
-	# install_x86_energy
+	install_perf
+	install_cpupower
+	install_x86_energy
 	sudo apt install linux-tools-`uname -r`
+
 	configure_for_exp
 }
 

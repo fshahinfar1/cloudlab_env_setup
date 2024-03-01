@@ -1,8 +1,16 @@
 #! /bin/bash
-user=farbod
+CURDIR=$(realpath $(dirname $0))
+YAML=$CURDIR/config.yaml
 
-dut_machine=hp097.utah.cloudlab.us
-gen_machine=hp096.utah.cloudlab.us
+function read_from_yaml {
+	# Very simplestic
+	field=$1
+	echo $(cat $YAML | grep $field | cut -d ':' -f 2 | tr -d '[:space:]')
+}
+
+user=$(read_from_yaml user)
+dut_machine=$(read_from_yaml $dut_machine)
+gen_machine=$(read_from_yaml $gen_machine)
 dests=( $dut_machine $gen_machine )
 # dests=( $dut_machine )
 
