@@ -337,7 +337,7 @@ function do_dut {
 
 	sudo apt install -y libelf-dev libdw-dev gcc-multilib cmake \
 		python3 python3-pip python3-venv libpcap-dev libpci-dev libnuma-dev \
-		flex bison libslang2-dev
+		flex bison libslang2-dev libcap-dev
 
 	pip install flask
 	install_clang
