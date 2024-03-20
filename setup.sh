@@ -224,6 +224,7 @@ function install_dpdk_burst_replay {
 	sudo apt install -y meson ninja-build libpcap-dev libcap-dev libelf-dev \
 		python3 python3-pip python3-pyelftools pkg-config \
 		libnuma-dev libpcap-dev libcap-dev cmake
+	pip install scapy
 	# GRUB
 	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
 	echo $grub | sudo tee -a /etc/default/grub

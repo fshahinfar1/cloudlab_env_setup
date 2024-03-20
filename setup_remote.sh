@@ -1,4 +1,6 @@
 #! /bin/bash
+set -x -e
+
 CURDIR=$(realpath $(dirname $0))
 YAML=$CURDIR/config.yaml
 
@@ -8,9 +10,9 @@ function read_from_yaml {
 	echo $(cat $YAML | grep $field | cut -d ':' -f 2 | tr -d '[:space:]')
 }
 
-user=$(read_from_yaml user)
-dut_machine=$(read_from_yaml $dut_machine)
-gen_machine=$(read_from_yaml $gen_machine)
+user=$(read_from_yaml "user")
+dut_machine=$(read_from_yaml "dut_machine")
+gen_machine=$(read_from_yaml "gen_machine")
 dests=( $dut_machine $gen_machine )
 # dests=( $dut_machine )
 
