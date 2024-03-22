@@ -262,7 +262,7 @@ function install_dpdk_burst_replay {
 	# tool
 	cd $HOME/gen/
 	sudo apt install libyaml-dev libcsv-dev cmake
-	git clone  https://github.com/sebymiano/dpdk-burst-replay/
+	git clone https://github.com/fshahinfar1/dpdk-burst-replay.git
 	cd dpdk-burst-replay
 	git checkout multicore-txrate
 	git submodule update --init
