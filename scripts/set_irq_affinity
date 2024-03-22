@@ -175,11 +175,15 @@ setaff()
 
 	queues="${IFACE}-.*TxRx"
 
+	pci_addr=$(grep PCI_SLOT_NAME /sys/class/net/$NET_IFACE/device/uevent | cut -f2 -d=)
+	mlx5_queues="mlx5_comp[0-9]\+@pci:$pci_addr"
+
 	irqs=$(grep "$queues" /proc/interrupts | cut -f1 -d:)
 	[ -z "$irqs" ] && irqs=$(grep $IFACE /proc/interrupts | cut -f1 -d:)
 	[ -z "$irqs" ] && irqs=$(for i in `ls -Ux /sys/class/net/$IFACE/device/msi_irqs` ;\
 	                         do grep "$i:.*TxRx" /proc/interrupts | grep -v fdir | cut -f 1 -d : ;\
 	                         done)
+	[ -z "$irqs" ] && irqs=$(grep "$mlx5_queues" /proc/interrupts | cut -f1 -d:)
 	[ -z "$irqs" ] && echo "Error: Could not find interrupts for $IFACE"
 
 	echo "IFACE CORE MASK -> FILE"
