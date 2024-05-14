@@ -61,6 +61,7 @@ function get_repos {
 }
 
 function get_wrk_gen {
+	sudo apt install -y libssl-dev
 	# TCP Traffic Gen
 	cd $HOME
 	git clone https://github.com/fshahinfar1/tcp_traffic_gen
@@ -122,6 +123,16 @@ EOF
 	cd $HOME
 }
 
+function install_go {
+	cd $HOME
+	mkdir go_tmp_dir/
+	cd go_tmp_dir/
+	wget https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
+	sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.22.3.linux-amd64.tar.gz
+	echo "export PATH=$PATH:/usr/local/go/bin" | tee -a $HOME/.bashrc
+	source $HOME/.bashrc
+}
+
 function setup_nginx {
 	# Setup NGINX
 	sudo apt install -y nginx
@@ -133,10 +144,11 @@ function setup_nginx {
 function _install_custom_kernel {
 	# Install new kernel
 	# cd $NAS/kernel/binary/
-	cd $NAS/kernel/binary/
-	sudo dpkg -i linux-headers.deb \
-		linux-image.deb \
-		linux-libc-dev.deb
+	# cd $NAS/kernel/binary/
+	# sudo dpkg -i linux-headers.deb \
+	# 	linux-image.deb \
+	# 	linux-libc-dev.deb
+	echo "No new kernel will be installed"
 }
 
 function _install_custom_kernel_from_script {
