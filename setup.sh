@@ -46,18 +46,16 @@ function install_gcc11 {
 }
 
 function get_repos {
+	# "git@github.com:fshahinfar1/auto_generated_bpf.git" \
+	# "git@github.com:fshahinfar1/auto_bpf_offload_case_study.git" \
 	list_repos=( "git@github.com:fshahinfar1/kashk.git" \
-		"git@github.com:fshahinfar1/auto_generated_bpf.git" \
-		"git@github.com:fshahinfar1/auto_bpf_offload_case_study.git" \
 		"git@github.com:fshahinfar1/auto_kern_offload_bench.git" \
+		"git@github.com:fshahinfar1/bpf_prefetch.git" \
 	)
-
 	for repo_addr in ${list_repos[@]}; do
 		cd $HOME
 		git clone $repo_addr --config core.sshCommand='ssh -i ~/.ssh/id_dummy'
 	done
-
-	c
 }
 
 function get_wrk_gen {
@@ -113,7 +111,11 @@ EOF
 	git config --global init.defaultBranch "master"
 
 	sudo apt update
-	sudo apt install -y htop build-essential exuberant-ctags mosh cmake silversearcher-ag pkg-config
+	sudo apt install -y htop build-essential exuberant-ctags mosh cmake \
+		silversearcher-ag pkg-config libelf-dev libdw-dev gcc-multilib \
+				python3 python3-pip python3-venv libpcap-dev libpci-dev \
+				libnuma-dev flex bison libslang2-dev libcap-dev libssl-dev \
+				libncurses-dev libslang2-dev
 
 	# Configure vim
 	cd $HOME
@@ -121,6 +123,10 @@ EOF
 	cd ./dotvim
 	./install.sh
 	cd $HOME
+
+	eval $(ssh-agent)
+	ssh-add $HOME/.ssh/id_dummy
+	echo 'eval $(ssh-agent)' | tee -a $HOME/.bashrc
 }
 
 function install_go {
@@ -170,17 +176,19 @@ function disable_irqbalance {
 
 function install_cpupower {
 	# Install cpupower tool on the server
-	cd $NAS/kernel/linux-6.1.4/tools/power/cpupower
-	sudo make install
-	echo "/usr/lib64" | sudo tee /etc/ld.so.conf.d/cpupower.conf
-	sudo ldconfig
+	# cd $NAS/kernel/linux-6.1.4/tools/power/cpupower
+	# sudo make install
+	# echo "/usr/lib64" | sudo tee /etc/ld.so.conf.d/cpupower.conf
+	# sudo ldconfig
+	echo "Install cpupower tool after installing a new kernel ..."
 }
 
 function install_x86_energy {
-	cd $NAS/kernel/linux-6.1.4/tools/power/x86/x86_energy_perf_policy
-	sudo make clean
-	sudo make
-	sudo make install
+	# cd $NAS/kernel/linux-6.1.4/tools/power/x86/x86_energy_perf_policy
+	# sudo make clean
+	# sudo make
+	# sudo make install
+	echo "Install x86_energy_perf tool after installing a new kernel ..."
 }
 
 function configure_for_exp {
@@ -238,9 +246,12 @@ function install_dpdk_burst_replay {
 		libnuma-dev libpcap-dev libcap-dev cmake
 	pip install scapy
 	# GRUB
-	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
+	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 preempt=none"'
 	echo $grub | sudo tee -a /etc/default/grub
 	sudo update-grub
+	# INSTALL DIR
+	cd $HOME
+	mkdir -p $HOME/gen/
 	# OFED
 	sudo lshw | grep mlx5 &> /dev/null
 	has_mlx5=$?
@@ -253,8 +264,6 @@ function install_dpdk_burst_replay {
 		fi
 		ubuntu_release=$DISTRIB_RELEASE
 		tar_name="MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu$ubuntu_release-x86_64"
-		cd $HOME
-		mkdir gen/
 		cd $HOME/gen/
 		wget "https://content.mellanox.com/ofed/MLNX_OFED-23.10-1.1.9.0/MLNX_OFED_LINUX-23.10-1.1.9.0-ubuntu$ubuntu_release-x86_64.tgz"
 		tar -xf "./$tar_name.tgz"
@@ -342,15 +351,11 @@ function do_gen {
 	install_dpdk_burst_replay
 	install_cpupower
 	install_x86_energy
-	configure_for_exp
+	# configure_for_exp
 }
 
 function do_dut {
 	configure_dev_env
-
-	sudo apt install -y libelf-dev libdw-dev gcc-multilib cmake \
-		python3 python3-pip python3-venv libpcap-dev libpci-dev libnuma-dev \
-		flex bison libslang2-dev libcap-dev
 
 	pip install flask
 	install_clang
@@ -361,7 +366,7 @@ function do_dut {
 	install_new_kernel
 
 	# Configure HUGEPAGES
-	grub='GRUB_CMDLINE_LINUX_DEFAULT="default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
+	grub='GRUB_CMDLINE_LINUX_DEFAULT="preempt=none default_hugepagesz=1G hugepagesz=1G hugepages=8 nosmt"'
 	echo $grub | sudo tee -a /etc/default/grub
 	sudo update-grub
 
@@ -373,7 +378,39 @@ function do_dut {
 	install_x86_energy
 	sudo apt install linux-tools-`uname -r`
 
-	configure_for_exp
+	# configure_for_exp
+}
+
+function do_dut2 {
+	set -e
+
+	DISK="$HOME/disk"
+	# configure the disk
+	if [! -d $DISK ]; then
+		mkdir $DISK
+		sudo mkfs.ext4 /dev/sda4
+	fi
+	sudo mount /dev/sda4 $DISK
+	sudo chown $USER $DISK
+
+	configure_dev_env
+	install_clang
+
+	cd $DISK
+	git clone "git@github.com:fshahinfar1/auto_kern_offload_bench.git"
+	# TODO: make the source code
+
+	cd $DISK
+	git clone --depth 1 https://github.com/torvalds/linux.git --branch  v6.8-rc7 --single-branch
+	cd linux/
+	git am ../auto_kern_offload_bench/kernel/*.patch
+	mkdir build/
+	cd build/
+	make -C ../ O=$(pwd) defconfig
+	cp "$HOME/scripts/linux_config_6.8.7" .config
+	yes '' | make oldconfig
+	CORES=$(awk '/^processor/{x=$3};END{print x}' < /proc/cpuinfo)
+	make -j $((CORES + 2))
 }
 
 case $1 in
@@ -383,6 +420,8 @@ case $1 in
 		do_gen ;;
 	"dut")
 		do_dut ;;
+	"dut2")
+		do_dut2 ;;
 	"repo")
 		get_repos ;;
 	"kern")
@@ -395,6 +434,8 @@ case $1 in
 		install_gcc11 ;;
 	"nginx")
 		setup_nginx ;;
+	"dpdk_burst_reply")
+		install_dpdk_burst_replay ;;
 	*)
 		echo "Error: unknown mode was selected"
 		usage
