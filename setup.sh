@@ -110,12 +110,13 @@ EOF
 	git config --global user.email "fshahinfar1@gmail.com"
 	git config --global init.defaultBranch "master"
 
+	# Install general packages we might use
 	sudo apt update
 	sudo apt install -y htop build-essential exuberant-ctags mosh cmake \
 		silversearcher-ag pkg-config libelf-dev libdw-dev gcc-multilib \
 				python3 python3-pip python3-venv libpcap-dev libpci-dev \
 				libnuma-dev flex bison libslang2-dev libcap-dev libssl-dev \
-				libncurses-dev libslang2-dev
+				libncurses-dev libslang2-dev jq
 
 	# Configure vim
 	cd $HOME
@@ -124,9 +125,24 @@ EOF
 	./install.sh
 	cd $HOME
 
+	# Configure ssh session
 	eval $(ssh-agent)
 	ssh-add $HOME/.ssh/id_dummy
 	echo 'eval $(ssh-agent)' | tee -a $HOME/.bashrc
+	echo 'ssh-add $HOME/.ssh/id_dummy' | tee -a $HOME/.bashrc
+
+	# Configure NET_IFACE
+	EXPERIMENT_IP_RANGE="192.168"
+	tmp_ifaces_info=( $(ip -json addr | jq '.[] | [.ifname, .ifindex, .addr_info[].local] | join("|")' | grep $EXPERIMENT_IP_RANGE) )
+	if [ ${#tmp_ifaces_info[@]} -eq 1 ]; then
+		iface_name=$(echo ${tmp_ifaces_info[0]} | tr -d '"' | cut -f 1 -d '|')
+		# iface_index=$(echo ${tmp_ifaces_info[0]} | tr -d '"' | cut -f 2 -d '|')
+		echo "export NET_IFACE=\"$iface_name\""
+		# echo "export NET_IFINDEX=$iface_index"
+		# echo "export NET_PCI_ADDR=$iface_index"
+	else
+		echo Multiple interfaces with IP in experiment range found!
+	fi
 }
 
 function install_go {
@@ -311,38 +327,22 @@ function install_libbpf {
 function install_bpftool {
 	# Install bpftool
 	# TODO: this is failing (test it)
-	cd $NAS/kernel/linux-6.1.4/tools/bpf/bpftool/
-	sudo make clean
-	sudo make
-	sudo make install
+	# cd $NAS/kernel/linux-6.1.4/tools/bpf/bpftool/
+	# sudo make clean
+	# sudo make
+	# sudo make install
+	echo Install bpftool after installing kernel
 }
 
 function install_perf {
 	# Install perf
-	path=$NAS/kernel/linux-6.1.4/tools/perf
-	cd $path/
-	sudo make clean
-	sudo make
-	sudo ln -s $path/perf /usr/bin/perf
+	# path=$NAS/kernel/linux-6.1.4/tools/perf
+	# cd $path/
+	# sudo make clean
+	# sudo make
+	# sudo ln -s $path/perf /usr/bin/perf
+	echo Install perf after installing kernel
 }
-
-function usage {
-	echo "setup.sh <mode>"
-	echo "MODES:"
-	echo "  * gen: configure the workload generator machine"
-	echo "  * dut: configure the machine under test"
-	echo "  * repo: only fetch the repos"
-	echo "  * kern: only install the custom kernel"
-	echo "  * exp : configure machine for the experiment"
-	echo "  * clang: install clang"
-}
-
-check_pre_conditions
-
-if [ $# -lt 1 ] ; then
-	usage
-	exit 0
-fi
 
 function do_gen {
 	configure_dev_env
@@ -412,6 +412,24 @@ function do_dut2 {
 	CORES=$(awk '/^processor/{x=$3};END{print x}' < /proc/cpuinfo)
 	make -j $((CORES + 2))
 }
+
+function usage {
+	echo "setup.sh <mode>"
+	echo "MODES:"
+	echo "  * gen: configure the workload generator machine"
+	echo "  * dut: configure the machine under test"
+	echo "  * repo: only fetch the repos"
+	echo "  * kern: only install the custom kernel"
+	echo "  * exp : configure machine for the experiment"
+	echo "  * clang: install clang"
+}
+
+check_pre_conditions
+
+if [ $# -lt 1 ] ; then
+	usage
+	exit 0
+fi
 
 case $1 in
 	"dev_env")
