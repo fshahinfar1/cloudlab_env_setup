@@ -1,5 +1,6 @@
 #! /bin/bash
-set -x -e
+set -x
+set -e
 
 CURDIR=$(realpath $(dirname $0))
 YAML=$CURDIR/config.yaml
@@ -14,7 +15,7 @@ user=$(read_from_yaml "user")
 dut_machine=$(read_from_yaml "dut_machine")
 gen_machine=$(read_from_yaml "gen_machine")
 dests=( $dut_machine $gen_machine )
-# dests=( $dut_machine )
+# dests=( $gen_machine )
 
 # Gather the fingerprints
 ssh-keyscan ${dests[@]} >> $HOME/.ssh/known_hosts
@@ -40,5 +41,5 @@ bash ~/setup.sh dut
 EOF
 
 ssh ${user}@${gen_machine} <<EOF
-bash ~/setup.sh gen
+	bash ~/setup.sh gen
 EOF
