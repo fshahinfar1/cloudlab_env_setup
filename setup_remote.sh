@@ -17,6 +17,15 @@ gen_machine=$(read_from_yaml "gen_machine")
 dests=( $dut_machine $gen_machine )
 # dests=( $gen_machine )
 
+# Selected configuration for each machine
+DUT=dut
+GEN=gen
+if [ ! -z "$MACHNET" ]; then
+	echo Configuring enviroment for MACHNET...
+	DUT=machnet
+	GEN=machnet
+fi
+
 # Gather the fingerprints
 ssh-keyscan ${dests[@]} >> $HOME/.ssh/known_hosts
 
@@ -37,9 +46,9 @@ done
 
 # Run setup script
 ssh ${user}@${dut_machine} <<EOF
-bash ~/setup.sh dut
+bash ~/setup.sh $DUT
 EOF
 
 ssh ${user}@${gen_machine} <<EOF
-	bash ~/setup.sh gen
+bash ~/setup.sh $GEN
 EOF

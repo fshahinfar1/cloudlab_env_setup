@@ -101,6 +101,10 @@ function install_all_package {
 }
 
 function configure_dev_env {
+	# Install tmux-resurrect
+	if [ ! -d $HOME/dev ]; then mkdir $HOME/dev; fi
+	RESURRECT_DIR=$HOME/dev/tmux-resurrect
+	git clone https://github.com/tmux-plugins/tmux-resurrect.git $RESURRECT_DIR
 	# Configure tmux
 	cat > $HOME/.tmux.conf <<EOF
 unbind-key C-b
@@ -117,6 +121,7 @@ bind-key k select-pane -U
 bind-key j select-pane -D
 bind-key h select-pane -L
 bind-key l select-pane -R
+run-shell $RESURRECT_DIR/resurrect.tmux
 EOF
 
 	# Configure git
@@ -126,13 +131,14 @@ EOF
 	git config --global init.defaultBranch "master"
 
 	# Configure vim
-	cd $HOME
-	git clone https://github.com/fshahinfar1/dotvim
-	cd ./dotvim
+	DOTVIM_DIR=$HOME/dev/dotvim
+	git clone https://github.com/fshahinfar1/dotvim $DOTVIM_DIR
+	pushd $DOTVIM_DIR
 	./install.sh
-	cd $HOME
+	popd $HOME
 
-	# Configure ssh session
+	# Configure ssh session, It seems important to enable this key for some of
+	# the operations in this script
 	eval $(ssh-agent)
 	ssh-add $HOME/.ssh/id_dummy
 	echo 'eval $(ssh-agent)' | tee -a $HOME/.bashrc
@@ -192,6 +198,8 @@ function _install_custom_kernel_from_fyro {
 	wget cloudlab.fyro.ir/linux_archive/baseline/linux-headers-6.8.0-rc7_6.8.0-rc7-2_amd64.deb
 	wget cloudlab.fyro.ir/linux_archive/baseline/linux-image-6.8.0-rc7_6.8.0-rc7-2_amd64.deb
 	wget cloudlab.fyro.ir/linux_archive/baseline/linux-libc-dev_6.8.0-rc7-2_amd64.deb
+	sudo dpkg -i *.deb
+	echo "Make sure the new kernel is installed properly and then reboot"
 }
 
 function install_new_kernel {
@@ -342,6 +350,16 @@ function install_dpdk_burst_replay {
 	make
 }
 
+function install_dpdk_client_server {
+	# TODO: make sure DPDK is installed on the system
+	mkdir -p $HOME/gen/
+	cd $HOME/gen/
+	git clone https://github.com/fshahinfar1/dpdk-client-server.git
+	cd dpdk-client-server
+	make
+	cd $HOME
+}
+
 function install_mutilate {
 	sudo apt-get install -y scons libevent-dev gengetopt libzmq3-dev
 	mkdir -p $HOME/gen
@@ -373,6 +391,8 @@ function install_bpftool {
 	# sudo make clean
 	# sudo make
 	# sudo make install
+	# TODO: if I am installing a custom kernel, then install from the source,
+	# otherwise consider the pre-built packages.
 	echo Install bpftool after installing kernel
 }
 
@@ -383,6 +403,8 @@ function install_perf {
 	# sudo make clean
 	# sudo make
 	# sudo ln -s $path/perf /usr/bin/perf
+	# TODO: if I am installing a custom kernel, then install from the source,
+	# otherwise consider the pre-built packages.
 	echo Install perf after installing kernel
 }
 
@@ -417,6 +439,7 @@ function do_gen {
 	install_cpupower
 	install_x86_energy
 	install_mutilate
+	install_dpdk_client_server
 	# configure_for_exp
 }
 
