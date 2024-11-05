@@ -50,7 +50,7 @@ function get_repos {
 	# "git@github.com:fshahinfar1/auto_bpf_offload_case_study.git" \
 	list_repos=( "git@github.com:fshahinfar1/kashk.git" \
 		"git@github.com:fshahinfar1/auto_kern_offload_bench.git" \
-		"git@github.com:fshahinfar1/bpf_prefetch.git" \
+		"git@github.com:bpf-endeavor/bpf_prefetch.git" \
 	)
 	for repo_addr in ${list_repos[@]}; do
 		cd $HOME
@@ -195,10 +195,10 @@ function _install_custom_kernel_from_script {
 function _install_custom_kernel_from_fyro {
 	mkdir -p $HOME/disk
 	cd $HOME/disk
-	wget cloudlab.fyro.ir/linux_archive/baseline/linux-headers-6.8.0-rc7_6.8.0-rc7-2_amd64.deb
-	wget cloudlab.fyro.ir/linux_archive/baseline/linux-image-6.8.0-rc7_6.8.0-rc7-2_amd64.deb
-	wget cloudlab.fyro.ir/linux_archive/baseline/linux-libc-dev_6.8.0-rc7-2_amd64.deb
-	sudo dpkg -i *.deb
+	# wget cloudlab.fyro.ir/linux_archive/baseline/linux-headers-6.8.0-rc7_6.8.0-rc7-2_amd64.deb
+	# wget cloudlab.fyro.ir/linux_archive/baseline/linux-image-6.8.0-rc7_6.8.0-rc7-2_amd64.deb
+	# wget cloudlab.fyro.ir/linux_archive/baseline/linux-libc-dev_6.8.0-rc7-2_amd64.deb
+	# sudo dpkg -i *.deb
 	echo "Make sure the new kernel is installed properly and then reboot"
 }
 
@@ -373,7 +373,7 @@ function install_libbpf {
 	cd $HOME
 	mkdir libbpf
 	cd $HOME/libbpf
-	_VERSION="1.0.0"
+	_VERSION="1.4.7"
 	VERSION="v$_VERSION"
 	wget https://github.com/libbpf/libbpf/archive/refs/tags/$VERSION.tar.gz
 	tar -xf $VERSION.tar.gz
