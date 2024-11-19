@@ -94,7 +94,7 @@ function install_all_package {
 		libslang2-dev libcap-dev libssl-dev libncurses-dev jq meson ninja-build \
 		python3-pyelftools libyaml-dev libcsv-dev nlohmann-json3-dev gcc g++ \
 		doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
-		uuid-dev )
+		uuid-dev git-lfs )
 
 	sudo apt install -y ${PACKAGES[@]}
 	pip install scapy flask
@@ -381,6 +381,7 @@ function install_libbpf {
 	make
 	sudo make install
 	echo "/usr/lib64/" | sudo tee /etc/ld.so.conf.d/libbpf.conf
+	echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/lib64/pkgconfig/"' | tee -a $HOME/.bashrc
 	sudo ldconfig
 }
 
