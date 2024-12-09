@@ -51,6 +51,8 @@ function get_repos {
 	list_repos=( "git@github.com:fshahinfar1/kashk.git" \
 		"git@github.com:fshahinfar1/auto_kern_offload_bench.git" \
 		"git@github.com:bpf-endeavor/bpf_prefetch.git" \
+		"git@github.com:bpf-endeavor/Servant.git" \
+		"git@github.com:bpf-endeavor/katran_userspace.git" \
 	)
 	for repo_addr in ${list_repos[@]}; do
 		cd $HOME
@@ -94,10 +96,13 @@ function install_all_package {
 		libslang2-dev libcap-dev libssl-dev libncurses-dev jq meson ninja-build \
 		python3-pyelftools libyaml-dev libcsv-dev nlohmann-json3-dev gcc g++ \
 		doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
-		uuid-dev git-lfs )
+		uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
+		libzstd-dev )
 
 	sudo apt install -y ${PACKAGES[@]}
 	pip install scapy flask
+	# install linxu tools
+	sudo apt install -y linux-tools-$(uname -r)
 }
 
 function configure_dev_env {
