@@ -2,20 +2,7 @@
 set -x
 set -e
 
-CURDIR=$(realpath $(dirname $0))
-YAML=$CURDIR/config.yaml
-
-function read_from_yaml {
-	# Very simplestic
-	field=$1
-	echo $(cat $YAML | grep $field | cut -d ':' -f 2 | tr -d '[:space:]')
-}
-
-user=$(read_from_yaml "user")
-dut_machine=$(read_from_yaml "dut_machine")
-gen_machine=$(read_from_yaml "gen_machine")
-dests=( $dut_machine $gen_machine )
-# dests=( $gen_machine )
+source servers.sh
 
 # Selected configuration for each machine
 DUT=dut
@@ -38,7 +25,8 @@ for m in ${dests[@]}; do
 	# Copy helper scripts
 	scp -r ./scripts ${user}@${m}:~/
 
-	# Run setup script
+	# Make sure the system knows the github ssh fingerpring so that the
+	# setup script runs smoothly
 	ssh ${user}@${m} <<EOF
 	ssh-keyscan github.com >> ~/.ssh/known_hosts
 EOF
@@ -52,3 +40,10 @@ EOF
 ssh ${user}@${gen_machine} <<EOF
 bash ~/setup.sh $GEN
 EOF
+
+# TODO: make the config system more flexible :)
+if [ ! -z "$gen_machine_2" ]; then
+ssh ${user}@${gen_machine} <<EOF
+bash ~/setup.sh $GEN
+EOF
+fi
