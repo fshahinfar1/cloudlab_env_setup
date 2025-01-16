@@ -30,7 +30,8 @@ function register_clang_version {
         --slave   /usr/bin/llvm-size         llvm-size        /usr/bin/llvm-size-${version} \
         --slave   /usr/bin/llvm-stress       llvm-stress      /usr/bin/llvm-stress-${version} \
         --slave   /usr/bin/llvm-symbolizer   llvm-symbolizer  /usr/bin/llvm-symbolizer-${version} \
-        --slave   /usr/bin/llvm-tblgen       llvm-tblgen      /usr/bin/llvm-tblgen-${version}
+        --slave   /usr/bin/llvm-tblgen       llvm-tblgen      /usr/bin/llvm-tblgen-${version} \
+        --slave   /usr/bin/llvm-strip        llvm-strip       /usr/bin/llvm-strip-${version}
 
     update-alternatives \
         --install /usr/bin/clang                 clang                 /usr/bin/clang-${version} ${priority} \
@@ -50,7 +51,8 @@ function register_clang_version {
         --slave   /usr/bin/clang-reorder-fields  clang-reorder-fields  /usr/bin/clang-reorder-fields-${version} \
         --slave   /usr/bin/clang-tidy            clang-tidy            /usr/bin/clang-tidy-${version} \
         --slave   /usr/bin/lldb                  lldb                  /usr/bin/lldb-${version} \
-        --slave   /usr/bin/lldb-server           lldb-server           /usr/bin/lldb-server-${version}
+        --slave   /usr/bin/lldb-server           lldb-server           /usr/bin/lldb-server-${version} \
+        --slave   /usr/bin/llc                   llc                   /usr/bin/llc-${version}
 }
 
 register_clang_version $1 $2
