@@ -1,4 +1,4 @@
 user: farbod
-dut_machine: amd227.utah.cloudlab.us
-gen_machine: amd210.utah.cloudlab.us
-gen_machine_2: amd216.utah.cloudlab.us
+dut_machine: amd195.utah.cloudlab.us
+gen_machine: amd181.utah.cloudlab.us
+gen_machine_2: amd189.utah.cloudlab.us

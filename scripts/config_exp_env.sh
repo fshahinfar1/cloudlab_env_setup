@@ -5,7 +5,7 @@ set -e
 RUN=1
 UDP_QUEUE=4
 SERVER_IP="192.168.1.1/24"
-CPU=$(!lscpu | grep Vendor | cut -d : -f 2 | tr -d ' ')
+CPU=$(lscpu | grep Vendor | cut -d : -f 2 | tr -d ' ')
 
 
 function on_signal {
@@ -60,8 +60,8 @@ function add_flow_rules {
 	# Check ntuple is enable
 	can_filter=$(sudo ethtool -k "$DEV" | grep 'ntuple-filters' | cut -d ':' -f 2 | tr -d ' ')
 	if [ "$can_filter" != 'on' ]; then
-		echo "Error: the ntuple-filters is not enabled on the selected NIC."
-		return
+		echo "Warning: the ntuple-filters is not enabled on the selected NIC."
+        sudo ethtool -K "$DEV" ntuple-filters on
 	fi
 
 	sudo ethtool -U "$DEV" flow-type udp4 action "$UDP_QUEUE"
@@ -87,10 +87,10 @@ function main {
 	echo 0 | sudo tee /sys/kernel/mm/ksm/run
 	echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 	echo off | sudo tee /sys/devices/system/cpu/smt/control
-    if [ "$CPU" = "GenuineIntel" ]; then
-        sudo x86_energy_perf_policy performance > /dev/null
-        echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
-    fi
+	if [ "$CPU" = "GenuineIntel" ]; then
+		sudo x86_energy_perf_policy performance > /dev/null
+		echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+	fi
 	sudo sysctl -w kernel.bpf_stats_enabled=0
 	sudo systemctl stop irqbalance
 	sudo ethtool -K "$NET_IFACE" rx-checksumming off tso off gso off gro off lro off
