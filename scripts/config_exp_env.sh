@@ -7,6 +7,16 @@ UDP_QUEUE=4
 SERVER_IP="192.168.1.1/24"
 CPU=$(lscpu | grep Vendor | cut -d : -f 2 | tr -d ' ')
 
+turn_off_busypolling() {
+    echo 0 | sudo tee "/sys/class/net/$NET_IFACE/napi_defer_hard_irqs"
+    echo 0 | sudo tee "/sys/class/net/$NET_IFACE/gro_flush_timeout"
+}
+
+busypoll_budget=200000
+turn_on_busypolling() {
+    echo 2 | sudo tee "/sys/class/net/$NET_IFACE/napi_defer_hard_irqs"
+    echo "$busypoll_budget" | sudo tee "/sys/class/net/$NET_IFACE/gro_flush_timeout"
+}
 
 function on_signal {
 	echo "On signal"

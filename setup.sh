@@ -98,7 +98,7 @@ function install_all_package {
 		python3-pyelftools libyaml-dev libcsv-dev nlohmann-json3-dev gcc g++ \
 		doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
 		uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
-		libzstd-dev libunwind-dev libreadline-dev )
+		libzstd-dev libunwind-dev libreadline-dev numactl )
 
 	sudo apt install -y ${PACKAGES[@]}
 	pip install scapy flask
@@ -157,6 +157,7 @@ EOF
 		iface_name=$(echo ${tmp_ifaces_info[0]} | tr -d '"' | cut -f 1 -d '|')
 		# iface_index=$(echo ${tmp_ifaces_info[0]} | tr -d '"' | cut -f 2 -d '|')
 		echo "export NET_IFACE=\"$iface_name\"" | tee -a $HOME/.bashrc
+		sudo lshw | grep -C 2 $iface_name | grep pci | cut -d '@' -f 2 | xargs -I{} echo "export NET_PCI="{} | tee -a $HOME/.bashrc
 		# echo "export NET_IFINDEX=$iface_index"
 		# echo "export NET_PCI_ADDR=$iface_index"
 	else
