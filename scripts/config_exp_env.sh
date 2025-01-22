@@ -21,6 +21,7 @@ turn_on_busypolling() {
 function on_signal {
 	echo "On signal"
 	RUN=0
+	turn_off_busypolling
 	sudo cpupower frequency-set -g schedutil &> /dev/null
 	remove_all_flow_rules $NET_IFACE
 	sudo cpupower idle-set -D 4
@@ -104,6 +105,7 @@ function main {
 	sudo sysctl -w kernel.bpf_stats_enabled=0
 	sudo systemctl stop irqbalance
 	sudo ethtool -K "$NET_IFACE" rx-checksumming off tso off gso off gro off lro off
+	turn_on_busypolling
 	trap "on_signal" SIGINT SIGHUP
 	echo "hit Ctrl-C to terminate"
 	while [ $RUN -eq 1 ] ; do
