@@ -2,10 +2,41 @@
 
 # This script configures the current machine based on the selected mode
 # (see usage)
-# Expecting Cloudlab xl170 (ubuntu-20.04/ubuntu-22.04)
+# Tested with Cloudlab:
+#     - Clusters:
+#         * Utah: xl170, d6515, c6525-100g, c6525-25g
+#         * Clemson: c6420, c6320
+#     - OS image: (ubuntu-22.04) [previously with ubuntu-20.04 but has been sometime]
 
-# Global vars
+# The path to the network attached storage. You may keep your experiment
+# specific stuff there and use it to setup your experiments
 NAS="/proj/progstack-PG0/farbod/"
+# I load a dummy ssh-key from my local machine to the servers. It allows me to
+# access remote repositories
+DUMMY_SSH_KEY=$HOME/.ssh/id_dummy
+
+# What version of clang do you want to install?
+CLANG_VERSION=15
+
+# List of repos to setup in your DUT machine
+# "git@github.com:fshahinfar1/auto_generated_bpf.git" \
+# "git@github.com:fshahinfar1/auto_bpf_offload_case_study.git" \
+list_repos=( "git@github.com:fshahinfar1/kashk.git" \
+	"git@github.com:fshahinfar1/auto_kern_offload_bench.git" \
+	"git@github.com:bpf-endeavor/bpf_prefetch.git" \
+	"git@github.com:bpf-endeavor/Servant.git" \
+	"git@github.com:bpf-endeavor/katran_userspace.git" \
+)
+
+# List of package to install on all machines
+PACKAGES=( htop build-essential exuberant-ctags mosh cmake \
+	silversearcher-ag pkg-config libelf-dev libdw-dev gcc-multilib python3 \
+	python3-pip python3-venv libpcap-dev libpci-dev libnuma-dev flex bison \
+	libslang2-dev libcap-dev libssl-dev libncurses-dev jq meson ninja-build \
+	python3-pyelftools libyaml-dev libcsv-dev nlohmann-json3-dev gcc g++ \
+	doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
+	uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
+	libzstd-dev libunwind-dev libreadline-dev numactl neovim )
 
 function check_pre_conditions {
 	# ls $NAS &> /dev/null
@@ -15,27 +46,27 @@ function check_pre_conditions {
 	# 	exit 1
 	# fi
 
-	if [ ! -f $HOME/.ssh/id_dummy ]; then
-		echo "The dummy key is not imported yet!"
-		exit 1
+	if [ ! -f "$DUMMY_SSH_KEY" ]; then
+		echo "Warning: The dummy key is not imported yet!"
+		echo "Do you want to continue without it? y/[N]?"
+		read -r cmd
+		if [ "$cmd" != "y" ]; then
+			exit 1
+		fi
 	fi
 }
 
 function install_clang {
 	# Install clang
-	CLANG_VERSION=15
-	cd $HOME
+	cd "$HOME"
 	wget https://apt.llvm.org/llvm.sh
 	chmod +x llvm.sh
 	sudo ./llvm.sh $CLANG_VERSION
 	# Both install clang-15 and clang-16
-	sudo ./llvm.sh 18
+	# sudo ./llvm.sh 18
 
 	# Configure the clang
-	# sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-$CLANG_VERSION 100
-	# sudo update-alternatives --install /usr/bin/llc llc /usr/bin/llc-$CLANG_VERSION 100
-	# sudo update-alternatives --install /usr/bin/llvm-strip llvm-strip /usr/bin/llvm-strip-$CLANG_VERSION 100
-	sudo bash $HOME/scripts/update-alternatives-clang.sh $CLANG_VERSION 100
+	sudo bash "$HOME/scripts/update-alternatives-clang.sh" $CLANG_VERSION 100
 }
 
 function install_gcc11 {
@@ -47,32 +78,24 @@ function install_gcc11 {
 }
 
 function get_repos {
-	# "git@github.com:fshahinfar1/auto_generated_bpf.git" \
-	# "git@github.com:fshahinfar1/auto_bpf_offload_case_study.git" \
-	list_repos=( "git@github.com:fshahinfar1/kashk.git" \
-		"git@github.com:fshahinfar1/auto_kern_offload_bench.git" \
-		"git@github.com:bpf-endeavor/bpf_prefetch.git" \
-		"git@github.com:bpf-endeavor/Servant.git" \
-		"git@github.com:bpf-endeavor/katran_userspace.git" \
-	)
-	for repo_addr in ${list_repos[@]}; do
-		cd $HOME
-		git clone $repo_addr --config core.sshCommand='ssh -i ~/.ssh/id_dummy'
+	for repo_addr in "${list_repos[@]}"; do
+		cd "$HOME"
+		git clone "$repo_addr" --config core.sshCommand='ssh -i ~/.ssh/id_dummy'
 	done
 }
 
 function get_wrk_gen {
-	mkdir -p $HOME/gen/
+	mkdir -p "$HOME/gen/"
 	# TCP Traffic Gen
-	cd $HOME/gen/
+	cd "$HOME/gen/"
 	git clone https://github.com/fshahinfar1/tcp_traffic_gen
 	cd tcp_traffic_gen
 	make
-	cp wrk $HOME/ge/tcpgen
-	cd $HOME
+	cp wrk "$HOME/gen/tcpgen"
+	cd "$HOME"
 
 	# UDP Traffic Gen
-	cd $HOME/gen/
+	cd "$HOME/gen/"
 	git clone https://github.com/fshahinfar1/udp_traffic_gen/
 	cd udp_traffic_gen/src
 	make
@@ -91,19 +114,10 @@ function bring_gen_scripts {
 
 function install_all_package {
 	sudo apt update
-	PACKAGES=( htop build-essential exuberant-ctags mosh cmake \
-		silversearcher-ag pkg-config libelf-dev libdw-dev gcc-multilib python3 \
-		python3-pip python3-venv libpcap-dev libpci-dev libnuma-dev flex bison \
-		libslang2-dev libcap-dev libssl-dev libncurses-dev jq meson ninja-build \
-		python3-pyelftools libyaml-dev libcsv-dev nlohmann-json3-dev gcc g++ \
-		doxygen graphviz libhugetlbfs-dev libnl-3-dev libnl-route-3-dev \
-		uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
-		libzstd-dev libunwind-dev libreadline-dev numactl neovim )
-
-	sudo apt install -y ${PACKAGES[@]}
+	sudo apt install -y "${PACKAGES[@]}"
 	pip install scapy flask
 	# install linxu tools
-	sudo apt install -y linux-tools-$(uname -r)
+	sudo apt install -y "linux-tools-$(uname -r)"
 }
 
 function configure_dev_env {
