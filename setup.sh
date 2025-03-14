@@ -26,6 +26,7 @@ list_repos=( "git@github.com:fshahinfar1/kashk.git" \
 	"git@github.com:bpf-endeavor/bpf_prefetch.git" \
 	"git@github.com:bpf-endeavor/Servant.git" \
 	"git@github.com:bpf-endeavor/katran_userspace.git" \
+	"git@github.com:bpf-endeavor/ebpf-arena-tutorial.git" \
 )
 
 # List of package to install on all machines
@@ -205,6 +206,22 @@ function _install_custom_kernel {
 	# 	linux-image.deb \
 	# 	linux-libc-dev.deb
 	echo "No new kernel will be installed"
+
+	mkdir -p $HOME/disk
+	cd $HOME/disk
+	git clone https://github.com/acmel/dwarves.git
+	cd dwarves
+	git checkout v1.29
+	mkdir build/
+	cd build/
+	cmake ../
+	make -j
+	sudo make install
+	sudo ldconfig
+
+	cd $HOME/disk
+	wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.3.tar.xz
+	tar -xf linux-6.13.3.tar.xz
 }
 
 function _install_custom_kernel_from_script {
@@ -225,9 +242,9 @@ function _install_custom_kernel_from_fyro {
 
 function install_new_kernel {
 	echo Installing new kernel ...
-	# _install_custom_kernel
+	_install_custom_kernel
 	# _install_custom_kernel_from_script
-	_install_custom_kernel_from_fyro
+	# _install_custom_kernel_from_fyro
 }
 
 function disable_irqbalance {
@@ -375,7 +392,7 @@ function install_dpdk_client_server {
 	# TODO: make sure DPDK is installed on the system
 	mkdir -p $HOME/gen/
 	cd $HOME/gen/
-	git clone https://github.com/fshahinfar1/dpdk-client-server.git
+	git clone git@github.com:fshahinfar1/dpdk-client-server.git
 	cd dpdk-client-server
 	make
 	cd $HOME
