@@ -39,6 +39,8 @@ PACKAGES=( htop build-essential exuberant-ctags mosh cmake \
 	uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
 	libzstd-dev libunwind-dev libreadline-dev numactl neovim )
 
+KERNEL_SOURCE_DIR=""
+
 function check_pre_conditions {
 	# ls $NAS &> /dev/null
 	# ret=$?
@@ -207,8 +209,8 @@ function _install_custom_kernel {
 	# 	linux-libc-dev.deb
 	echo "No new kernel will be installed"
 
-	mkdir -p $HOME/disk
-	cd $HOME/disk
+	mkdir -p "$HOME/disk"
+	cd "$HOME/disk"
 	git clone https://github.com/acmel/dwarves.git
 	cd dwarves
 	git checkout v1.29
@@ -219,9 +221,10 @@ function _install_custom_kernel {
 	sudo make install
 	sudo ldconfig
 
-	cd $HOME/disk
+	cd "$HOME/disk"
 	wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.3.tar.xz
 	tar -xf linux-6.13.3.tar.xz
+	KERNEL_SOURCE_DIR="$HOME/disk/linux-6.13.3"
 }
 
 function _install_custom_kernel_from_script {
@@ -258,7 +261,15 @@ function install_cpupower {
 	# sudo make install
 	# echo "/usr/lib64" | sudo tee /etc/ld.so.conf.d/cpupower.conf
 	# sudo ldconfig
-	echo "Install cpupower tool after installing a new kernel ..."
+
+	if [ -n "$KERNEL_SOURCE_DIR" ]; then
+		cd "$KERNEL_SOURCE_DIR/tools/power/cpupower"
+		make -j
+		sudo make install
+		sudo ldconfig
+	else
+		echo "Install cpupower tool after installing a new kernel ..."
+	fi
 }
 
 function install_x86_energy {
@@ -266,7 +277,13 @@ function install_x86_energy {
 	# sudo make clean
 	# sudo make
 	# sudo make install
-	echo "Install x86_energy_perf tool after installing a new kernel ..."
+	if [ -n "$KERNEL_SOURCE_DIR" ]; then
+		cd "$KERNEL_SOURCE_DIR/tools/power/x86/x86_energy_perf_policy"
+		make
+		sudo make install
+	else
+		echo "Install x86_energy_perf tool after installing a new kernel ..."
+	fi
 }
 
 function configure_for_exp {
@@ -432,7 +449,15 @@ function install_bpftool {
 	# sudo make install
 	# TODO: if I am installing a custom kernel, then install from the source,
 	# otherwise consider the pre-built packages.
-	echo Install bpftool after installing kernel
+
+	if [ -n "$KERNEL_SOURCE_DIR" ]; then
+		cd "$KERNEL_SOURCE_DIR/tools/bpf/"
+		make clean
+		make -j
+		sudo make install
+	else
+		echo "Install bpftool after installing kernel"
+	fi
 }
 
 function install_perf {
@@ -444,7 +469,19 @@ function install_perf {
 	# sudo ln -s $path/perf /usr/bin/perf
 	# TODO: if I am installing a custom kernel, then install from the source,
 	# otherwise consider the pre-built packages.
-	echo Install perf after installing kernel
+
+	if [ -n "$KERNEL_SOURCE_DIR" ]; then
+		cd "$KERNEL_SOURCE_DIR/tools/perf"
+		make clean
+		BUILD_NONDISTRO=1 make
+		target=/usr/bin/perf
+		if [ -f $target ]; then
+			sudo rm $target
+		fi
+		sudo ln -s "$KERNEL_SOURCE_DIR/tools/perf/perf" $target
+	else
+		echo "Install perf after installing kernel ..."
+	fi
 }
 
 function prepare_base_env {
