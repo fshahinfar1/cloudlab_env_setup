@@ -1,4 +1,4 @@
 user: farbod
-dut_machine: hp008.utah.cloudlab.us
-gen_machine: hp037.utah.cloudlab.us
-gen_machine_2: hp009.utah.cloudlab.us
+dut_machine: sm110p-10s10602.wisc.cloudlab.us
+gen_machine: sm110p-10s10614.wisc.cloudlab.us
+# gen_machine0_2: hp009.utah.cloudlab.us

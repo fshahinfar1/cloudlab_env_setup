@@ -6,7 +6,7 @@ YAML=$CURDIR/config.yaml
 function read_from_yaml {
 	# Very simplestic
 	field=$1
-	echo $(cat $YAML | grep "$field:" | cut -d ':' -f 2 | tr -d '[:space:]')
+	echo $(cat $YAML | grep -v "^#" | grep "$field:" | cut -d ':' -f 2 | tr -d '[:space:]')
 }
 
 user=$(read_from_yaml "user")
