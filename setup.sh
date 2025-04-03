@@ -39,6 +39,8 @@ PACKAGES=( htop build-essential exuberant-ctags mosh cmake \
 	uuid-dev git-lfs libbfd-dev libbinutils gettext libtraceevent-dev \
 	libzstd-dev libunwind-dev libreadline-dev numactl neovim )
 
+# TODO: I still haven't figured out what is the most convinient way of shipping
+# custom kernels :)
 KERNEL_SOURCE_DIR=""
 
 function check_pre_conditions {
@@ -225,6 +227,14 @@ function _install_custom_kernel {
 	wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.3.tar.xz
 	tar -xf linux-6.13.3.tar.xz
 	KERNEL_SOURCE_DIR="$HOME/disk/linux-6.13.3"
+
+	if [ -f "$HOME/disk/_kernel/custom_kernel.tar.xz" ]; then
+		# the user has copied a compiled custom kernel and wants us to install it
+		cd "$HOME/disk/_kernel"
+		tar -xf "custom_kernel.tar.xz"
+		# install all the .deb files
+		sudo dpkg -i $(find . -name '*.deb')
+	fi
 }
 
 function _install_custom_kernel_from_script {

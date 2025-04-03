@@ -1,4 +1,4 @@
 user: farbod
-dut_machine: sm110p-10s10602.wisc.cloudlab.us
-gen_machine: sm110p-10s10614.wisc.cloudlab.us
+dut_machine: clnode186.clemson.cloudlab.us
+gen_machine: clnode219.clemson.cloudlab.us
 # gen_machine0_2: hp009.utah.cloudlab.us

@@ -32,6 +32,21 @@ for m in "${dests[@]}"; do
 EOF
 done
 
+
+# ==================================================================
+# TODO: I still haven't figured out what is the most convinient way of shipping
+# custom kernels :)
+# Move my patched kernel to the DUT
+#
+# NOTES: for improvement, move the custom archive dir to the config. Also the
+# version of kernel should be defined in the config so we fetch the correct
+# source file for installing other tools
+# ..................................................................
+tar="$HOME"/linux-kernel-6.13.3-arena-prefetch.tar.xz
+ssh "${user}@${dut_machine}" "mkdir -p ~/disk/_kernel"
+scp "$tar" "${user}@${dut_machine}:~/disk/_kernel/custom_kernel.tar.xz"
+# ==================================================================
+
 # Run setup script
 ssh "${user}@${dut_machine}" "bash ~/setup.sh $DUT"
 
