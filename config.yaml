@@ -1,4 +1,4 @@
 user: farbod
-dut_machine: clnode186.clemson.cloudlab.us
-gen_machine: clnode219.clemson.cloudlab.us
+dut_machine: hp048.utah.cloudlab.us
+gen_machine: hp040.utah.cloudlab.us
 # gen_machine0_2: hp009.utah.cloudlab.us

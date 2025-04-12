@@ -500,7 +500,6 @@ function prepare_base_env {
 }
 
 function install_machnet {
-	prepare_base_env
 	# Install and set gcc-10 and g++-10 as the default compiler.
 	sudo apt install -y gcc-10 g++-10 libgtest-dev # libgflags-dev
 	sudo apt purge -y libgflags-dev
@@ -516,6 +515,20 @@ function install_machnet {
 	cd machnet
 	git submodule update --init --recursive
 	mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -GNinja ../ && ninja
+}
+
+function install_tas {
+	# TAS
+	cd $HOME/dev/
+	git clone git@github.com:fshahinfar1/tas.git
+	cd tas/
+	make
+	# TAS benchmarks
+	mkdir -p $HOME/dev/tas-b/
+	cd $HOME/dev/tas-b/
+	git clone git@github.com:fshahinfar1/tas-benchmark.git benchmarks
+	cd benchmarks/micro_rpc/
+	make
 }
 
 function do_gen {
@@ -588,6 +601,12 @@ function do_dut2 {
 	make -j $((CORES + 2))
 }
 
+function prepare_machnet_exp_env {
+	prepare_base_env
+	install_machnet
+	install_tas
+}
+
 function usage {
 	echo "setup.sh <mode>"
 	echo "MODES:"
@@ -630,7 +649,7 @@ case $1 in
 	"dpdk_burst_reply")
 		install_dpdk_burst_replay ;;
 	"machnet")
-		install_machnet ;;
+		prepare_machnet_exp_env ;;
 	*)
 		echo "Error: unknown mode was selected"
 		usage
